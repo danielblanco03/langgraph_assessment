@@ -6,7 +6,8 @@ from components.helper_functions import (
     classify_temperature, 
     get_weather_description, 
     get_greeting,
-    format_local_time
+    format_local_time,
+    seconds_to_utc_offset
 )
 
 def fetch_location_data(state: WeatherAgentState) -> WeatherAgentState:
@@ -24,18 +25,30 @@ def fetch_location_data(state: WeatherAgentState) -> WeatherAgentState:
             config.LOCATION_API_URL,
             timeout=config.REQUEST_TIMEOUT
         )
-        response.raise_for_status()
+        response.raise_for_status() # Raise HTTPError for bad responses
         
-        # This API returns coordinates in decimal degrees, but we need to convert to radians for the weather API
-        location_data = response.json()
-        
+        # Open-Meteo expects latitude and longitude in normal decimal degrees
+        raw_location_data = response.json()
+        #utc offset is given in seconds
+
         # Validate required fields
-        required_fields = ['city', 'region', 'country', 'latitude', 'longitude', 'utc_offset', 'timezone']
+        required_fields = ['city', 'regionName', 'country', 'lat', 'lon', 'offset', 'timezone']
+
         for field in required_fields:
-            if field not in location_data:
+            if field not in raw_location_data:
                 raise ValueError(f"Missing required field: {field}")
+            
+        location_data = {
+            "city": raw_location_data["city"],
+            "region": raw_location_data["regionName"],
+            "country_name": raw_location_data["country"],
+            "latitude": raw_location_data["lat"],
+            "longitude": raw_location_data["lon"],
+            "timezone": raw_location_data["timezone"],
+            "utc_offset": seconds_to_utc_offset(raw_location_data["offset"])
+        }            
         
-        state["location_data"] = {}
+        state["location_data"] = location_data
         
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to fetch location data: {str(e)}")
