@@ -109,13 +109,25 @@ def format_local_time(utc_time_str: str, utc_offset_str: str) -> str:
     Args:
         utc_time_str: UTC time in ISO8601 format
         utc_offset_str: UTC offset string
+
+    Example: format_local_time("2026-04-29T12:00:00Z", "+02:00")
         
     Returns:
         Formatted local time string
     """
     try:
+        if not utc_time_str:
+            return "Time unavailable"
+                
         # Parse UTC time
-        utc_time = datetime.fromisoformat(utc_time_str.replace('Z', '+00:00'))
+        utc_time = datetime.fromisoformat(
+            utc_time_str.replace('Z', '+00:00')
+            )
+        
+        # If datetime has no timezone, assume UTC
+        if utc_time.tzinfo is None:
+            utc_time = utc_time.replace(tzinfo=timezone.utc)
+
         
         # Calculate local time
         offset = parse_utc_offset(utc_offset_str)
@@ -124,7 +136,10 @@ def format_local_time(utc_time_str: str, utc_offset_str: str) -> str:
         # Format times
         utc_formatted = utc_time.strftime("%H:%M UTC")
         local_formatted = local_time.strftime("%H:%M")
+
+        offset_label = utc_offset_str if utc_offset_str else "+00:00"
         
-        return f"{utc_formatted} | {local_formatted} (UTC{utc_offset_str})"
+        return f"{utc_formatted} | {local_formatted} (UTC{offset_label})"
+    
     except Exception:
         return "Time unavailable"
