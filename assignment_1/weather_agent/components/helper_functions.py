@@ -143,3 +143,24 @@ def format_local_time(utc_time_str: str, utc_offset_str: str) -> str:
     
     except Exception:
         return "Time unavailable"
+    
+def seconds_to_utc_offset(offset_seconds: int) -> str:
+    """
+    Convert UTC offset in seconds obtained in location API to string format ±HH:MM 
+    as expected
+
+    Args: offset_seconds: UTC offset in seconds (e.g., 19800 for +05:30)
+    """
+    try:
+        total_seconds = int(offset_seconds)
+
+        sign = "+" if total_seconds >= 0 else "-"
+        total_seconds = abs(total_seconds)
+
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+
+        return f"{sign}{hours:02d}:{minutes:02d}"
+
+    except (TypeError, ValueError):
+        return "+00:00"
