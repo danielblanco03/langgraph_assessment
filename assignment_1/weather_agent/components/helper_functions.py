@@ -38,8 +38,15 @@ def get_weather_description(weather_code: int) -> str:
     Returns:
         Weather description string
     """
-    return config.WEATHER_CODE_DESCRIPTIONS.get(weather_code, f"Weather code {weather_code}")
-
+    try:
+        code = int(weather_code)
+        return config.WEATHER_CODE_DESCRIPTIONS.get(
+            code,
+            f"Weather code {code}"
+        )
+    except (TypeError, ValueError):
+        return "Unknown weather condition"
+    
 def get_greeting(is_day: int) -> str:
     """
     Get appropriate greeting based on time of day.
@@ -66,10 +73,14 @@ def parse_utc_offset(utc_offset_str: str) -> timedelta:
         timedelta object representing the offset
     """
     try:
+        if not utc_offset_str:
+            return (timedelta(0))
+        
+        offset_str = utc_offset_str.strip()
+        
         # Remove '+' if present and split by ':'
-        offset_str = utc_offset_str.replace('+', '')
         sign = -1 if offset_str.startswith('-') else 1
-        offset_str = offset_str.replace('-', '')
+        offset_str = offset_str.replace('+', '').replace('-', '')
         
         if ':' in offset_str:
             hours, minutes = map(int, offset_str.split(':'))
@@ -81,9 +92,13 @@ def parse_utc_offset(utc_offset_str: str) -> timedelta:
             else:
                 hours = int(offset_str)
                 minutes = 0
+
+        # Protect against invalid offsets
+        if hours > 14 or minutes > 59:
+            return timedelta(0)
         
         return timedelta(hours=sign * hours, minutes=sign * minutes)
-    except (ValueError, IndexError):
+    except (ValueError, IndexError, AttributeError):
         # Default to UTC if parsing fails
         return timedelta(0)
 
