@@ -11,18 +11,22 @@ def classify_temperature(temp_celsius: float) -> str:
     Returns:
         Temperature classification string
     """
-    if temp_celsius:
-        return config.TEMP_MIN
-    elif temp_celsius < config.TEMP_COLD:
-        return "cold"
-    elif temp_celsius < config.TEMP_COOL:
-        return "cool"
-    elif temp_celsius < config.TEMP_COMFORTABLE:
-        return "comfortable"
-    elif temp_celsius < config.TEMP_WARM:
-        return "warm"
-    else:
-        return "hot"
+    try:
+        temp = float(temp_celsius)
+
+        if temp < config.TEMP_COLD:
+            return "cold"
+        elif temp < config.TEMP_COOL:
+            return "cool"
+        elif temp < config.TEMP_COMFORTABLE:
+            return "comfortable"
+        elif temp < config.TEMP_WARM:
+            return "warm"
+        else:
+            return "hot"
+        
+    except (ValueError, TypeError):
+        return "unknown"
 
 def get_weather_description(weather_code: int) -> str:
     """
