@@ -50,10 +50,9 @@ class Config(BaseSettings):
         99: "Thunderstorm with heavy hail"
     }
 
-    WEATHER_API_BASE_URL: str =""
+    TEMP_MIN : float = -10.0  # Celsius
+    TEMP_MAX : float = 40.0   # Celsius
 
-    TEMP_MIN = str = "Needs Debugging"
-    
     model_config = {
         "env_file": ".env",
         "case_sensitive": False,
