@@ -50,9 +50,6 @@ class Config(BaseSettings):
         99: "Thunderstorm with heavy hail"
     }
 
-    TEMP_MIN : float = -10.0  # Celsius
-    TEMP_MAX : float = 40.0   # Celsius
-
     model_config = {
         "env_file": ".env",
         "case_sensitive": False,
