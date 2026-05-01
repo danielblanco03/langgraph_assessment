@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, START, END
-from components.state import WeatherAgentState
-from components.nodes import (
+from .components.state import WeatherAgentState
+from .components.nodes import (
     fetch_location_data,
     fetch_weather_data, 
     generate_weather_info

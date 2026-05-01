@@ -1,5 +1,5 @@
-from graph import weather_agent
-from components.state import WeatherAgentState
+from .graph import weather_agent
+from .components.state import WeatherAgentState
 
 def main():
     name = input("Enter your name: ").strip()

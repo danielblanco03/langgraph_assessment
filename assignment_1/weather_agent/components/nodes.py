@@ -1,15 +1,14 @@
 import requests
 from typing import Dict, Any
-from components.state import WeatherAgentState
-from components.config import config
-from components.helper_functions import (
+from .state import WeatherAgentState
+from .config import config
+from .helper_functions import (
     classify_temperature, 
     get_weather_description, 
     get_greeting,
     format_local_time,
     seconds_to_utc_offset
 )
-from final_assessment.langgraph_assessment.assignment_1.weather_agent.components import state
 
 def fetch_location_data(state: WeatherAgentState) -> WeatherAgentState:
     """

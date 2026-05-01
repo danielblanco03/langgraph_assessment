@@ -1,5 +1,5 @@
 from datetime import datetime, timezone, timedelta
-from components.config import config
+from .config import config
 
 def classify_temperature(temp_celsius: float) -> str:
     """
