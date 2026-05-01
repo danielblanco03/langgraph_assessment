@@ -30,6 +30,10 @@ def fetch_location_data(state: WeatherAgentState) -> WeatherAgentState:
         # Open-Meteo expects latitude and longitude in normal decimal degrees
         raw_location_data = response.json()
         #utc offset is given in seconds
+        if raw_location_data.get("status") != "success":
+            raise ValueError(
+                f"Location API failed: {raw_location_data.get('message', 'Unknown error')}"
+            )
 
         # Validate required fields
         required_fields = ['city', 'regionName', 'country', 'lat', 'lon', 'offset', 'timezone']
