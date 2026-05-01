@@ -16,8 +16,9 @@ builder.add_node("generate_weather_info", generate_weather_info)
 # Add edges - simple linear flow
 # Update: LangGraph processes nodes in parallel by default, so order doesn't matter
 builder.add_edge(START, "fetch_location_data")
-builder.add_edge("fetch_location_data", "generate_weather_info")
+builder.add_edge("fetch_location_data", "fetch_weather_data")
+builder.add_edge("fetch_weather_data", "generate_weather_info")
 builder.add_edge("generate_weather_info", END)
 
 # Auto-compile the graph
-weather_agent = builder
+weather_agent = builder.compile()
