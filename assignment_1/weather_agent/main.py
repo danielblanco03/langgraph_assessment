@@ -6,12 +6,12 @@ def main():
     if not name:
         name = "User"
     
-    state = WeatherAgentState(
-        name=name,
-        location_data=None,
-        weather_data=None,
-        weather_info=None
-    )
+    state = {
+        "name": name,
+        "location_data": None,
+        "weather_data": None,
+        "weather_info": None
+    }
 
     try:
         final_state = weather_agent.invoke(state)
@@ -29,5 +29,5 @@ def main():
         print(f"\nError: {str(e)}")
         print("Please check your internet connection and try again.")
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     main()
