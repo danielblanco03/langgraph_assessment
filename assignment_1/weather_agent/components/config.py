@@ -11,7 +11,7 @@ class Config(BaseSettings):
     """
     
     # API Endpoints
-    LOCATION_API_URL: str = "https://ipapi.co/json/"
+    LOCATION_API_URL: str = "http://ip-api.com/json/"
     WEATHER_API_BASE_URL: str = "https://api.open-meteo.com/v1/forecast"
     
     # Request timeout settings
