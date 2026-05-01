@@ -9,6 +9,7 @@ from components.helper_functions import (
     format_local_time,
     seconds_to_utc_offset
 )
+from final_assessment.langgraph_assessment.assignment_1.weather_agent.components import state
 
 def fetch_location_data(state: WeatherAgentState) -> WeatherAgentState:
     """
@@ -79,10 +80,9 @@ def fetch_weather_data(state: WeatherAgentState) -> WeatherAgentState:
         params = {
             'latitude': location['latitude'],
             'longitude': location['longitude'],
-            'current_weather': 'true'
+            "current_weather": True
         }
-        
-        # Open-Meteo API requires authentication via API key in headers but no API key is set.
+
         response = requests.get(
             config.WEATHER_API_BASE_URL,
             params=params,
@@ -96,8 +96,17 @@ def fetch_weather_data(state: WeatherAgentState) -> WeatherAgentState:
         if 'current_weather' not in weather_data:
             raise ValueError("Missing current_weather data in response")
         
-        required_weather_fields = ['time', 'temperature', 'windspeed', 'winddirection', 'is_day', 'weathercode']
+        
         current_weather = weather_data['current_weather']
+
+        required_weather_fields = [
+            'time', 
+            'temperature', 
+            'windspeed', 
+            'winddirection', 
+            'is_day', 
+            'weathercode'
+            ]
         
         for field in required_weather_fields:
             if field not in current_weather:
@@ -127,12 +136,12 @@ def generate_weather_info(state: WeatherAgentState) -> WeatherAgentState:
     if not state.get("location_data") or not state.get("weather_data"):
         raise Exception("Location or weather data not available for info generation")
     
-    location = state["location_data"]
-    weather = state["weather_data"]["current_weather"]
-    units = state["weather_data"].get("current_weather_units", {})
-    
     try:
         # Extract data
+        location = state["location_data"]
+        weather = state["weather_data"]["current_weather"]
+        units = state["weather_data"].get("current_weather_units", {})
+
         name = state["name"]
         city = location["city"]
         region = location["region"]
@@ -142,7 +151,7 @@ def generate_weather_info(state: WeatherAgentState) -> WeatherAgentState:
         temperature = weather["temperature"]
         temp_unit = units.get("temperature", "°C")
         windspeed = weather["windspeed"]
-        # wind_unit = units.get("windspeed", "km/h")
+        wind_unit = units.get("windspeed", "km/h")
         is_day = weather["is_day"]
         weather_code = weather["weathercode"]
         utc_time = weather["time"]
@@ -164,7 +173,7 @@ def generate_weather_info(state: WeatherAgentState) -> WeatherAgentState:
             f"Current weather conditions:",
             f"• {weather_description}",
             f"• Temperature: {temperature}{temp_unit} ({temp_classification})",
-            f"• Wind: {windspeed} wind_unit"
+            f"• Wind: {windspeed}{wind_unit}"
         ]
         
         state["weather_info"] = "\n".join(weather_info_parts)
