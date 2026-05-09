@@ -1,5 +1,6 @@
+from typing import Literal, List, Dict, Any
 from datetime import datetime 
-from .config import config
+#from .config import config
 
 import yfinance as yf
 import numpy as np
@@ -115,171 +116,43 @@ def calculate_rsi(close: pd.Series, daysback: int = 14) -> List[float]:
     rs = up_ewm / down_ewm
     rsi = 100 - (100 / (1 + rs))
     return rsi.dropna().tolist()
-   
+
+def generate_recommendation(
+    ten_day_sma: List[float],
+    twenty_day_sma: List[float],
+    rsi: List[float],
+):
+    """
+    Provide BUY/HOLD/SELL recommendation based on SMA crossover and RSI.
+    Logic:
+    - If 10-day SMA > 20-day SMA and 50 < RSI < 70: BUY ("Golden Cross" logic)
+    - If 10-day SMA < 20-day SMA and 50 > RSI > 30: SELL ("Death Cross" logic)
+    - Otherwise: HOLD
+
+    Args:
+        ten_day_sma: 10-day simple moving average values
+        twenty_day_sma: 20-day simple moving average values
+        rsi: Relative Strength Index values
+
+    Returns:
+        "BUY", "HOLD", or "SELL"
+    """
+
+    if not ten_day_sma or not twenty_day_sma or not rsi:
+        raise ValueError("Indicator lists cannot be empty")
+
+    latest_10_sma = ten_day_sma[-1]
+    latest_20_sma = twenty_day_sma[-1]
+    latest_rsi = rsi[-1]
+
+    if latest_10_sma > latest_20_sma and 50 < latest_rsi < 70:
+        return "BUY"
+
+    if latest_10_sma < latest_20_sma and 50 > latest_rsi > 30:
+        return "SELL"
+
+    return "HOLD"
 
 def plot_data():
     pass
 
-def fetch_historical_data2(ticker: str) -> dict:
-    """
-    Classify temperature into human-readable categories.
-    
-    Args:
-        temp_celsius: Temperature in Celsius
-        
-    Returns:
-        Temperature classification string
-    """
-    try:
-        temp = float(temp_celsius)
-
-        if temp < config.TEMP_COLD:
-            return "cold"
-        elif temp < config.TEMP_COOL:
-            return "cool"
-        elif temp < config.TEMP_COMFORTABLE:
-            return "comfortable"
-        elif temp < config.TEMP_WARM:
-            return "warm"
-        else:
-            return "hot"
-        
-    except (ValueError, TypeError):
-        return "unknown"
-
-def get_weather_description(weather_code: int) -> str:
-    """
-    Get human-readable weather description from WMO code.
-    
-    Args:
-        weather_code: WMO weather code
-        
-    Returns:
-        Weather description string
-    """
-    try:
-        code = int(weather_code)
-        return config.WEATHER_CODE_DESCRIPTIONS.get(
-            code,
-            f"Weather code {code}"
-        )
-    except (TypeError, ValueError):
-        return "Unknown weather condition"
-    
-def get_greeting(is_day: int) -> str:
-    """
-    Get appropriate greeting based on time of day.
-    
-    Args:
-        is_day: 1 if day, 0 if night
-        
-    Returns:
-        Greeting string
-    """
-    if is_day == 1:
-        return "Good morning"
-    else:
-        return "Good evening"
-
-def parse_utc_offset(utc_offset_str: str) -> timedelta:
-    """
-    Parse UTC offset string to timedelta object.
-    
-    Args:
-        utc_offset_str: UTC offset in format '+05:30' or '-08:00'
-        
-    Returns:
-        timedelta object representing the offset
-    """
-    try:
-        if not utc_offset_str:
-            return (timedelta(0))
-        
-        offset_str = utc_offset_str.strip()
-        
-        # Remove '+' if present and split by ':'
-        sign = -1 if offset_str.startswith('-') else 1
-        offset_str = offset_str.replace('+', '').replace('-', '')
-        
-        if ':' in offset_str:
-            hours, minutes = map(int, offset_str.split(':'))
-        else:
-            # Handle cases like '+0530' without colon
-            if len(offset_str) == 4:
-                hours = int(offset_str[:2])
-                minutes = int(offset_str[2:])
-            else:
-                hours = int(offset_str)
-                minutes = 0
-
-        # Protect against invalid offsets
-        if hours > 14 or minutes > 59:
-            return timedelta(0)
-        
-        return timedelta(hours=sign * hours, minutes=sign * minutes)
-    except (ValueError, IndexError, AttributeError):
-        # Default to UTC if parsing fails
-        return timedelta(0)
-
-def format_local_time(utc_time_str: str, utc_offset_str: str) -> str:
-    """
-    Convert UTC time to local time with timezone info.
-    
-    Args:
-        utc_time_str: UTC time in ISO8601 format
-        utc_offset_str: UTC offset string
-
-    Example: format_local_time("2026-04-29T12:00:00Z", "+02:00")
-        
-    Returns:
-        Formatted local time string
-    """
-    try:
-        if not utc_time_str:
-            return "Time unavailable"
-                
-        # Parse UTC time
-        utc_time = datetime.fromisoformat(
-            utc_time_str.replace('Z', '+00:00')
-            )
-        
-        # If datetime has no timezone, assume UTC
-        if utc_time.tzinfo is None:
-            utc_time = utc_time.replace(tzinfo=timezone.utc)
-
-        
-        # Calculate local time
-        offset = parse_utc_offset(utc_offset_str)
-        local_time = utc_time + offset
-        
-        # Format times
-        utc_formatted = utc_time.strftime("%H:%M UTC")
-        local_formatted = local_time.strftime("%H:%M")
-
-        offset_label = utc_offset_str if utc_offset_str else "+00:00"
-        
-        return f"{utc_formatted} | {local_formatted} (UTC{offset_label})"
-    
-    except Exception:
-        return "Time unavailable"
-    
-def seconds_to_utc_offset(offset_seconds: int) -> str:
-    """
-    Convert UTC offset in seconds obtained in location API to string format ±HH:MM 
-    as expected
-
-    Args: offset_seconds: UTC offset in seconds (e.g., 19800 for +05:30)
-    """
-    try:
-        total_seconds = int(offset_seconds)
-
-        sign = "+" if total_seconds >= 0 else "-"
-        total_seconds = abs(total_seconds)
-
-        hours = total_seconds // 3600
-        minutes = (total_seconds % 3600) // 60
-
-        return f"{sign}{hours:02d}:{minutes:02d}"
-
-    except (TypeError, ValueError):
-        return "+00:00"
