@@ -29,7 +29,7 @@ def fetch_historical_data(ticker: str, t_interval: str='60d') -> DataFrame:
 def calculate_simple_moving_average(
         data: np.ndarray, 
         window_size: int=10
-    ) -> list:
+    ) -> List[float]:
     """
     Calculate the Simple Moving Average (SMA) for a given 
     data array and window size
@@ -60,7 +60,64 @@ def calculate_simple_moving_average(
 
     return sma_values
 
-def calculate_stength_index(data: DataFrame) -> DataFrame:
+def calculate_rsi(close: pd.Series, daysback: int = 14) -> List[float]:
+    """
+    Calculate the Relative Strength Index (RSI) for a given array of closing prices
+    and a specified number of days back.
+
+    The RSI is a momentum indicator that measures the speed and magnitude of recent price
+    changes to evaluate overbought or oversold conditions in the price of a stock.
+
+    Basic Formula:
+    RSI = 100 - (100 / (1+(avg. of upward price change / avg. of downward price change)))
+
+    Args:
+        close: Pandas Series of closing prices
+        daysback: Number of days to look back for calculating the RSI (default is 14)
+
+    Returns:
+        DataFrame containing the RSI values indexed by date
+    """
+    if daysback <= 0:
+        raise ValueError("daysback must be greater than 0")
+
+    if len(close) <= daysback:
+        raise ValueError("close must contain more values than daysback")
+
+    #Find difference between consecutive closing prices in the array
+    retrace = close.diff()
+    up = []
+    down = []
+
+    for i in range(len(retrace)):
+        #Determine whether the price change is an upward movement (positive) 
+        #or a downward movement (negative)
+        if retrace.iloc[i] < 0:
+            up.append(0)
+            down.append(retrace.iloc[i])
+        else:
+            up.append(retrace.iloc[i])
+            down.append(0)
+
+    up_series = pd.Series(up)
+    down_series = pd.Series(down).abs()
+    
+    #compute smoothed averages off gains and losses using an exponential moving average
+    #Recent values are given more weight than older values, which allows the RSI to respond more quickly to recent price changes
+    #Use adjust=False to use recursive formula: EWM_t = alpha * value_t + (1 - alpha) * EWMA_{t-1}
+    #So at each time step: avg_gain_today = (1/daysback)*gain_today + (1 - 1/daysback)*avg_gain_yesterday
+    #avg_loss_today = (1/daysback)*loss_today + (1 - 1/daysback)*avg_loss_yesterday  
+
+    up_ewm = up_series.ewm(alpha = 1 / daysback, adjust=False).mean() #alpha controls the degree of weighting decay
+    down_ewm = down_series.ewm(alpha = 1 / daysback, adjust=False).mean()
+
+    #Divide the average gain by the average loss to get the relative strength (RS)
+    rs = up_ewm / down_ewm
+    rsi = 100 - (100 / (1 + rs))
+    return rsi.dropna().tolist()
+   
+
+def plot_data():
     pass
 
 def fetch_historical_data2(ticker: str) -> dict:
