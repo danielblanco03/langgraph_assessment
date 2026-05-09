@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, List, Any
 from pydantic import BaseModel, Field
 
 class HistoricalData(BaseModel):
@@ -14,13 +14,10 @@ class HistoricalData(BaseModel):
     stock_splits: float = Field(..., description="Stock splits")
 
 class TechnicalIndicators(BaseModel):
-    """Current weather conditions"""
-    time: str = Field(..., description="Current time in ISO8601 format")
-    temperature: float = Field(..., description="Current temperature")
-    windspeed: float = Field(..., description="Current wind speed")
-    winddirection: int = Field(..., description="Wind direction in degrees")
-    is_day: bool = Field(..., description="1 if day, 0 if night")
-    weathercode: int = Field(..., description="WMO weather code")
+    """Technical indicators for stock analysis"""
+    ten_day_simple_moving_average: List[float] = Field(..., description="10-day simple moving average")
+    twenty_day_simple_moving_average: List[float] = Field(..., description="20-day simple moving average")
+    relative_stength_index: float = Field(..., description="Relative strength index")
 
 class RecomendationIndicator(BaseModel):
     """Complete weather response from Open-Meteo API"""
