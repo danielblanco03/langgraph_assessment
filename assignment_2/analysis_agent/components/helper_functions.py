@@ -2,6 +2,9 @@ from datetime import datetime
 from .config import config
 
 import yfinance as yf
+import numpy as np
+import pandas as pd
+from pandas import DataFrame
 
 def fetch_historical_data(ticker: str, t_interval: str='60d') -> DataFrame:
     """
@@ -22,7 +25,43 @@ def fetch_historical_data(ticker: str, t_interval: str='60d') -> DataFrame:
         return historical_data
     except (ValueError, TypeError):
         return "unknown"
+    
+def calculate_simple_moving_average(
+        data: np.ndarray, 
+        window_size: int=10
+    ) -> list:
+    """
+    Calculate the Simple Moving Average (SMA) for a given 
+    data array and window size
 
+    Args:
+        data: NumPy array of stock prices
+        window_size: Window size for the moving average
+
+    Returns:
+        List of Simple Moving Average values
+    """
+    if window_size <= 0:
+        raise ValueError("window_size must be > 0")
+    if window_size > len(data):
+        raise ValueError("window_size cannot be larger than data length")
+
+    i = 0
+    #Initialize an empty list to store the SMA values
+    sma_values = []
+
+    #Loop through the data and calculate the SMA for each window
+    for i in range(len(data) - window_size + 1):
+
+        #Calculate the average of the current window and append it to the 
+        #sma_values list
+        window_average = np.mean(data[i:i+window_size])
+        sma_values.append(window_average)
+
+    return sma_values
+
+def calculate_stength_index(data: DataFrame) -> DataFrame:
+    pass
 
 def fetch_historical_data2(ticker: str) -> dict:
     """
