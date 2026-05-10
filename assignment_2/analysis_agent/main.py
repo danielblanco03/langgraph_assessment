@@ -11,8 +11,7 @@ def main():
     state = {
         "ticker": ticker,
         "historical_data": None,
-        "technical_data": None,
-        "recommendation": None,
+        "technical_data": None, 
         "recommendation_info": None,
     }
 
