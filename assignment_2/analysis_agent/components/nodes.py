@@ -22,7 +22,7 @@ def fetch_stock_data(state: AnalysisAgentState) -> AnalysisAgentState:
         Updated state with historical_data populated
     """
     try:
-        ticker = state.get["ticker"]
+        ticker = state.get("ticker")
 
         if not ticker:
             raise ValueError('Ticker is missing from agent state')
@@ -41,7 +41,6 @@ def fetch_stock_data(state: AnalysisAgentState) -> AnalysisAgentState:
 
         #Save historical data in the expected format
         #JSON safe and Pydantic-friendly format
-
         historical_data = {
             #make date go: index --> Series --> formatted --> list
             "date": format_datetime_index(raw_historical_data.index),
