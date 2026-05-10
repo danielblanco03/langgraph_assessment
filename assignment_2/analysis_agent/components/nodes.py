@@ -60,6 +60,54 @@ def fetch_stock_data(state: AnalysisAgentState) -> AnalysisAgentState:
     
     return state
 
+def generate_technical_indicators(state: AnalysisAgentState) -> AnalysisAgentState:
+    """
+    Generate technical indicators from historical stock data.
+
+    Args:
+        state: Current agent state with historical_data populated
+
+    Returns:
+        Updated state with technical_data populated
+    """
+    historical_data = state.get("historical_data")
+
+    if not historical_data:
+        raise ValueError("Historical data not available for technical indicator generation")
+
+    try:
+        close_prices = np.array(historical_data["close"], dtype=float)
+
+        if len(close_prices) < 20:
+            raise ValueError("At least 20 closing prices are required")
+
+        ten_day_sma = calculate_simple_moving_average(
+            close_prices,
+            window_size=10,
+        )
+
+        twenty_day_sma = calculate_simple_moving_average(
+            close_prices,
+            window_size=20,
+        )
+
+        rsi = calculate_rsi(
+            close_prices,
+            daysback=14,
+        )
+
+        technical_data = {
+            "ten_day_simple_moving_average": ten_day_sma,
+            "twenty_day_simple_moving_average": twenty_day_sma,
+            "relative_strength_index": rsi,
+        }
+
+        state["technical_data"] = technical_data
+
+    except Exception as e:
+        raise RuntimeError(f"Error generating technical indicators: {e}") from e
+    
+    return state
 
 
 def fetch_weather_data(state: WeatherAgentState) -> WeatherAgentState:
