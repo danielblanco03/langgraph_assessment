@@ -7,7 +7,6 @@ from .helper_functions import (
     calculate_simple_moving_average, 
     calculate_rsi,
     generate_recommendation,
-    plot_rsi_with_candles,
     format_datetime_index
 )
 
