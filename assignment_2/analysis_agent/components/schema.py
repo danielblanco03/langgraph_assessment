@@ -17,8 +17,3 @@ class TechnicalIndicators(BaseModel):
     ten_day_simple_moving_average: List[float] = Field(..., description="10-day simple moving average")
     twenty_day_simple_moving_average: List[float] = Field(..., description="20-day simple moving average")
     relative_strength_index: List[float] = Field(..., description="Relative strength index")
-
-class RecommendationIndicator(BaseModel):
-    """Complete weather response from Open-Meteo API"""
-    trading_signal: str = Field(..., description="Trading signal recommendation")
-
