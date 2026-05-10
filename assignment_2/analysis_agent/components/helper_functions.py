@@ -8,7 +8,7 @@ import pandas as pd
 from pandas import DataFrame
 import matplotlib.pyplot as plt
 
-def fetch_historical_data(ticker: str, t_interval: str='60d') -> DataFrame:
+def fetch_historical_data(ticker: str, t_interval: str='60d') -> pd.DataFrame:
     """
     Fetch historical stock data for the given ticker and time
     interval using the yfinance library
@@ -20,13 +20,16 @@ def fetch_historical_data(ticker: str, t_interval: str='60d') -> DataFrame:
     Returns:
         DataFrame containing historical stock data
     """
-    try:
-        dat = yf.Ticker(ticker)
-        #Get historical market data
-        historical_data = dat.history(period=t_interval)
-        return historical_data
-    except (ValueError, TypeError):
-        return "unknown"
+    if not ticker:
+        raise ValueError("Ticker cannot be empty")
+
+    dat = yf.Ticker(ticker)
+    historical_data = dat.history(period=t_interval)
+
+    if historical_data is None or historical_data.empty:
+        raise ValueError(f"No historical data found for ticker: {ticker}")
+
+    return historical_data
     
 def calculate_simple_moving_average(
         data: np.ndarray, 
@@ -74,48 +77,55 @@ def calculate_rsi(close: np.ndarray, daysback: int = 14) -> List[float]:
     RSI = 100 - (100 / (1+(avg. of upward price change / avg. of downward price change)))
 
     Args:
-        close: Pandas Series of closing prices
-        daysback: Number of days to look back for calculating the RSI (default is 14)
+        close: NumPy array of closing prices
+        daysback: RSI lookback period
 
     Returns:
-        DataFrame containing the RSI values indexed by date
+        List of RSI values, same length as close.
+        Initial undefined values are np.nan.
     """
     if daysback <= 0:
         raise ValueError("daysback must be greater than 0")
 
+    close = np.asarray(close, dtype=float)
+
     if len(close) <= daysback:
         raise ValueError("close must contain more values than daysback")
 
-    #Find difference between consecutive closing prices in the array
-    retrace = close.diff()
-    up = []
-    down = []
+    #Price changes
+    delta = np.diff(close)
 
-    for i in range(len(retrace)):
-        #Determine whether the price change is an upward movement (positive) 
-        #or a downward movement (negative)
-        if retrace.iloc[i] < 0:
-            up.append(0)
-            down.append(retrace.iloc[i])
+    #Separate gains and losses using conditional logic
+    gains = np.where(delta > 0, delta, 0.0)
+    losses = np.where(delta < 0, -delta, 0.0)
+
+    #Create RSI array initialized with NaN values
+    rsi = np.full(len(close), np.nan)
+
+    #Initial average gain/loss
+    avg_gain = np.mean(gains[:daysback])
+    avg_loss = np.mean(losses[:daysback])
+
+    if avg_loss == 0:
+        rsi[daysback] = 100.0
+    else:
+        rs = avg_gain / avg_loss
+        rsi[daysback] = 100 - (100 / (1 + rs))
+
+    #Wilder smoothing formula
+    for i in range(daysback + 1, len(close)):
+        gain = gains[i - 1]
+        loss = losses[i - 1]
+
+        avg_gain = ((avg_gain * (daysback - 1)) + gain) / daysback
+        avg_loss = ((avg_loss * (daysback - 1)) + loss) / daysback
+
+        if avg_loss == 0:
+            rsi[i] = 100.0
         else:
-            up.append(retrace.iloc[i])
-            down.append(0)
+            rs = avg_gain / avg_loss
+            rsi[i] = 100 - (100 / (1 + rs))
 
-    up_series = pd.Series(up)
-    down_series = pd.Series(down).abs()
-    
-    #compute smoothed averages off gains and losses using an exponential moving average
-    #Recent values are given more weight than older values, which allows the RSI to respond more quickly to recent price changes
-    #Use adjust=False to use recursive formula: EWM_t = alpha * value_t + (1 - alpha) * EWMA_{t-1}
-    #So at each time step: avg_gain_today = (1/daysback)*gain_today + (1 - 1/daysback)*avg_gain_yesterday
-    #avg_loss_today = (1/daysback)*loss_today + (1 - 1/daysback)*avg_loss_yesterday  
-
-    up_ewm = up_series.ewm(alpha = 1 / daysback, adjust=False).mean() #alpha controls the degree of weighting decay
-    down_ewm = down_series.ewm(alpha = 1 / daysback, adjust=False).mean()
-
-    #Divide the average gain by the average loss to get the relative strength (RS)
-    rs = up_ewm / down_ewm
-    rsi = 100 - (100 / (1 + rs))
     return rsi.tolist()
 
 def generate_recommendation(
@@ -191,7 +201,7 @@ def plot_rsi_with_candles(
 
     
     
-    date = pd.to_datetime(date)
+    date = pd.to_datetime(date, utc=True)
 
     open_prices = np.array(open, dtype=float)
     high_prices = np.array(high, dtype=float)
@@ -328,6 +338,13 @@ def format_datetime_index(index: pd.DatetimeIndex) -> List[str]:
     Returns:
         List of formatted datetime strings in ISO8601 format
     """
+
+    #Convert to UTC first
+    if index.tz is None:
+        index = index.tz_localize("UTC")
+    else:
+        index = index.tz_convert("UTC")
+
     formatted = index.strftime("%Y-%m-%dT%H:%M:%S%z")
 
     #Insert colon in timezone offset (-0500 -> -05:00)
