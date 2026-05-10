@@ -62,7 +62,7 @@ def calculate_simple_moving_average(
 
     return sma_values
 
-def calculate_rsi(close: pd.Series, daysback: int = 14) -> List[float]:
+def calculate_rsi(close: np.ndarray, daysback: int = 14) -> List[float]:
     """
     Calculate the Relative Strength Index (RSI) for a given array of closing prices
     and a specified number of days back.
@@ -317,3 +317,18 @@ def plot_rsi_with_candles(
 
     plt.tight_layout()
     plt.show()
+
+def format_datetime_index(index: pd.DatetimeIndex) -> List[str]:
+    """
+    Format a pandas DatetimeIndex to timezone-aware ISO8601 strings
+
+    Args:
+        index: Pandas DatetimeIndex to be formatted
+
+    Returns:
+        List of formatted datetime strings in ISO8601 format
+    """
+    formatted = index.strftime("%Y-%m-%dT%H:%M:%S%z")
+
+    #Insert colon in timezone offset (-0500 -> -05:00)
+    return [d[:-2] + ":" + d[-2:] for d in formatted]
